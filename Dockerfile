@@ -1,12 +1,18 @@
 # ============ 基础镜像 ============
 FROM python:3.12-slim
 
+RUN sed -i \
+    -e 's|deb.debian.org/debian|mirrors.tencentyun.com/debian|g' \
+    -e 's|deb.debian.org/debian-security|mirrors.tencentyun.com/debian-security|g' \
+    /etc/apt/sources.list.d/debian.sources
+
 # 设置时区、防止 Python 输出缓冲
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     TZ=Asia/Shanghai \
     LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    LC_ALL=C.UTF-8\
+    UV_DEFAULT_INDEX=http://mirrors.tencentyun.com/pypi/simple
 
 # 设置工作目录
 WORKDIR /app
@@ -23,10 +29,11 @@ COPY pyproject.toml ./
 COPY uv.lock* ./
 
 # 安装 uv（如果你的 pyproject 用 uv 管理）
-RUN pip install --no-cache-dir uv
+RUN pip install --no-cache-dir -i https://mirrors.cloud.tencent.com/pypi/simple uv
 
 # 用 uv 安装依赖（生成虚拟环境在 /app/.venv）
-RUN uv sync --frozen --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 # ============ 复制项目代码 ============
 COPY . .
