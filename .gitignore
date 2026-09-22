@@ -28,3 +28,9 @@ uploads/
 # 系统
 .DS_Store
 Thumbs.db
+# Docker production environment
+.env.docker
+
+# Private keys
+*.pem
+*.key

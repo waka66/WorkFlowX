@@ -11,7 +11,7 @@ def get_password_hash(plain_pwd: str) -> str:
 def verify_password(plain_pwd: str, hashed_pwd: str) -> bool:
     return pwd_context.verify(plain_pwd, hashed_pwd)
 
-print(get_password_hash("Admin@123456"))
+
 
 #--------------------------------------------------------------------------------------------------------
 from datetime import datetime, timedelta, timezone
@@ -22,6 +22,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from app.models.user import User
 from app.core.exceptions import UnauthorizedError
 import logging
+from app.core.config import settings
 
 
 logger = logging.getLogger("app.core.security")
@@ -29,8 +30,8 @@ logger = logging.getLogger("app.core.security")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 #生成密钥的方法，终端输入：openssl rand -hex 32
-SECRET_KEY = "c9eacb031e2c6e28a73439ec449910f1bd25c1cfd5eb9b7d85dd88842d03d8de"
-ALGORITHM = "HS256"
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 过期时间30分钟
 
 #生成token

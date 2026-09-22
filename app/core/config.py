@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     upload_dir: Path = str(BASE_DIR / "uploads")
 
+    secret_key: str
+    algorithm: str
+
     # 日志配置
     log_file: str = str(BASE_DIR / "logs" / "app.log")  # 默认日志文件路径，留空字符串可禁用文件日志
     log_level: str = "INFO"  # 日志级别，可选 DEBUG, INFO, WARNING, ERROR, CRITICAL
