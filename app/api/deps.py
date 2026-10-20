@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.core.security import get_user_access_token
 from app.services import auth_service
 from app.common.schemas import GlobalRole
-from app.core.exceptions import UnauthorizedError, PermissionDeniedError, PermissionDeniedError
+from app.core.exceptions import UnauthorizedError, PermissionDeniedError
 
 
 async def get_current_user(
