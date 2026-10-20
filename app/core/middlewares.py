@@ -35,8 +35,11 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
         log_record['logger'] = record.name
         log_record['timestamp'] = record.created
         log_record['message'] = record.getMessage()
-        log_record['app'] = "my-fastapi-app"
-        log_record['env'] = "production"
+        # 服务标识与运行环境来自配置，不能写死：
+        # 同一份代码会跑在 dev / test / prod 三套环境，硬编码会让日志互相污染
+        log_record['app'] = settings.app_name
+        log_record['env'] = settings.app_env
+        log_record['version'] = settings.app_version
         request_id = get_request_id()
         if request_id:
             log_record['request_id'] = request_id
@@ -61,21 +64,28 @@ def setup_logging():
     handlers = [console_handler]
 
     # 文件 handler（根据配置决定是否启用）
+    # 注意：日志写不了不应该让服务起不来（只读文件系统 / 权限配置错误 / 磁盘满）
     log_file = settings.log_file.strip()  # 去除可能的多余空格
     if log_file:
-        log_dir = os.path.dirname(log_file)
-        if log_dir:
-            os.makedirs(log_dir, exist_ok=True)
+        try:
+            log_dir = os.path.dirname(log_file)
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
 
-        file_handler = TimedRotatingFileHandler(
-            log_file,
-            when="midnight",
-            backupCount=30,
-            encoding="utf-8",
-        )
-        file_handler.suffix = "%Y-%m-%d"
-        file_handler.setFormatter(formatter)
-        handlers.append(file_handler)
+            file_handler = TimedRotatingFileHandler(
+                log_file,
+                when="midnight",
+                backupCount=30,
+                encoding="utf-8",
+            )
+            file_handler.suffix = "%Y-%m-%d"
+            file_handler.setFormatter(formatter)
+            handlers.append(file_handler)
+        except OSError as exc:
+            # 降级为仅控制台输出，不阻塞应用启动
+            logging.getLogger("app.core.middlewares").warning(
+                "文件日志初始化失败，已降级为仅控制台输出: %s", exc
+            )
 
     # 设置日志级别
     level = getattr(logging, settings.log_level.upper(), logging.INFO)
