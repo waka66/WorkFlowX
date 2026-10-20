@@ -38,4 +38,7 @@ dev = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# 把项目根加入 sys.path：否则用 `pytest` 可执行文件（如 CI 的 `uv run pytest`）时
+# sys.path[0] 是脚本目录而非工作目录，import app 会失败
+pythonpath = ["."]
 testpaths = ["tests"]
