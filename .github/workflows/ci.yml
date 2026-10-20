@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: workflowx
+          POSTGRES_PASSWORD: workflowx
+          POSTGRES_DB: workflowx_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U workflowx"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # 库名必须包含 test，conftest 会校验，防止误连开发库
+      DATABASE_URL: postgresql+asyncpg://workflowx:workflowx@localhost:5432/workflowx_test
+      TEST_DATABASE_URL: postgresql+asyncpg://workflowx:workflowx@localhost:5432/workflowx_test
+      SECRET_KEY: ci-secret-key-for-testing-only
+      ALGORITHM: HS256
+      APP_ENV: test
+      LOG_FILE: ""
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: 安装依赖
+        run: uv sync --group dev
+
+      - name: 校验迁移可执行
+        run: uv run alembic upgrade head
+
+      - name: 运行测试
+        run: uv run pytest -q
